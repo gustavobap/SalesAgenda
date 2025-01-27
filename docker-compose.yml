@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  database:
+    image: sales-agenda-db
+    container_name: sales-agenda-db
+    build:
+      context: ./database
+  api:
+    depends_on:
+      - database
+    image: sales-agenda-api
+    container_name: sales-agenda-api
+    user: ${DOCKER_UID}
+    ports:
+      - ${API_PORT}:3000
+    build:
+      context: ./api
+      args:
+        UID: ${DOCKER_UID}
+        UPASSWORD: ${DOCKER_UPASSWORD}
+        UNAME: ${DOCKER_UNAME}
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./api/sales-agenda-api:/home/${DOCKER_UNAME}/sales-agenda-api
