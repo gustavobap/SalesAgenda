@@ -3,9 +3,9 @@ import { Client } from 'pg';
 
 export interface QueryAvailableSlotsFilters {
   date: Date,
-  products: Array<"Heatpumps" | "SolarPanels">,
-  language: "German" | "English",
-  rating: "Gold" | "Silver" | "Bronze"
+  products?: Array<"Heatpumps" | "SolarPanels">,
+  language?: "German" | "English",
+  rating?: "Gold" | "Silver" | "Bronze"
 }
 
 export type QueryAvailableSlotsResult = Array<{
@@ -20,22 +20,39 @@ export class CalendarService {
     @Inject('DB_CLIENT') private readonly client: Client,
   ) {}
 
-  async queryAvailableSlots(params: QueryAvailableSlotsFilters): Promise<QueryAvailableSlotsResult> {
+  async queryAvailableSlots(filters: QueryAvailableSlotsFilters): Promise<QueryAvailableSlotsResult> {
+
+    const conditions = [
+      'slots.booked = false',
+      'slots.start_date >= $1',
+      "slots.end_date < $1 + interval '1 day'"
+    ]
+
+    const params: Array<string|string[]|Date> = [filters.date]
+
+    if(filters.products){
+      params.push(filters.products)
+      conditions.push(`sales_managers.products @> $${params.length}`)
+    }
+
+    if(filters.language){
+      params.push(filters.language)
+      conditions.push(`$${params.length}=ANY(sales_managers.languages)`)
+    }
+
+    if(filters.rating){
+      params.push(filters.rating)
+      conditions.push(`$${params.length}=ANY(sales_managers.customer_ratings)`)
+    }
 
     const query = `
       select slots.start_date, count(sales_managers.id) as available_count from slots 
       inner join sales_managers on slots.sales_manager_id = sales_managers.id
-      where 
-        slots.booked = false and
-        slots.start_date >= $1 and
-        slots.end_date < $1 + interval '1 day' and
-        sales_managers.products @> $2 and
-        $3=ANY(sales_managers.languages) and
-        $4=ANY(sales_managers.customer_ratings)
+      where ${conditions.join(' and ')}
       group by (slots.start_date)
     `
 
-    const result = await this.client.query(query, [params.date, params.products, params.language, params.rating]);
+    const result = await this.client.query(query, params);
     return result.rows as QueryAvailableSlotsResult;
   }
 }
