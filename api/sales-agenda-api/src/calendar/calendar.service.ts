@@ -1,17 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Client } from 'pg';
-
-export interface QueryAvailableSlotsFilters {
-  date: Date,
-  products?: Array<"Heatpumps" | "SolarPanels">,
-  language?: "German" | "English",
-  rating?: "Gold" | "Silver" | "Bronze"
-}
-
-export type QueryAvailableSlotsResult = Array<{
-  start_date: string,
-  available_count: number
-}>
+import { QueryAvailableSlotsFiltersDTO, QueryAvailableSlotsResultDTO } from './calendar.dto';
 
 @Injectable()
 export class CalendarService {
@@ -20,7 +9,7 @@ export class CalendarService {
     @Inject('DB_CLIENT') private readonly client: Client,
   ) { }
 
-  async queryAvailableSlots(filters: QueryAvailableSlotsFilters): Promise<QueryAvailableSlotsResult> {
+  async queryAvailableSlots(filters: QueryAvailableSlotsFiltersDTO): Promise<QueryAvailableSlotsResultDTO> {
 
     const conditions = [
       'slots.booked = false',
@@ -46,20 +35,20 @@ export class CalendarService {
     }
 
     const query = `
-      select slots.start_date, count(sales_managers.id) as available_count from slots 
+      select slots.start_date, count(sales_managers.id)::INTEGER as available_count from slots 
       inner join sales_managers on slots.sales_manager_id = sales_managers.id
       where ${conditions.join(' and ')}
       and not exists (
         select 1 from slots as slots2 where 
         slots2.sales_manager_id = sales_managers.id and 
         slots2.booked = true and 
-        slots.start_date <= slots2.end_date and 
-        slots2.start_date <= slots.end_date 
+        slots.start_date < slots2.end_date and 
+        slots2.start_date < slots.end_date 
       )
       group by (slots.start_date)
     `
 
     const result = await this.client.query(query, params);
-    return result.rows as QueryAvailableSlotsResult;
+    return result.rows as QueryAvailableSlotsResultDTO;
   }
 }

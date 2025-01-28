@@ -1,22 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
-import { CalendarService, QueryAvailableSlotsFilters } from './calendar.service';
+import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { QueryAvailableSlotsFiltersDTO } from './calendar.dto';
+import { CalendarService } from './calendar.service';
 
 @Controller('calendar')
 export class CalendarController {
-  constructor(private readonly appService: CalendarService) {}
 
-  @Get('query')
-  async getHello() {
+  constructor(private readonly calendarService: CalendarService) {}
 
-    const params: QueryAvailableSlotsFilters = {
-      "date": new Date("2024-05-03"),
-      "products": ["Heatpumps", "SolarPanels"],
-      "language": "German",
-      "rating": "Gold"
-    }
-
-    const availableSlots = await this.appService.queryAvailableSlots(params);
-
-    return `<pre>${JSON.stringify(availableSlots, null, 2)}</pre>`;
+  @Post('query')
+  @HttpCode(200)
+  async query(@Body() filters: QueryAvailableSlotsFiltersDTO) {
+    return this.calendarService.queryAvailableSlots(filters);
   }
 }
