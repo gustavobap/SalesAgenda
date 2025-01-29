@@ -20,13 +20,12 @@ services:
     build:
       context: ./api
       args:
-        UID: ${DOCKER_UID}
-        UPASSWORD: ${DOCKER_UPASSWORD}
-        UNAME: ${DOCKER_UNAME}
+        UID: ${DOCKER_UID:-1000}
+        UPASSWORD: ${DOCKER_UPASSWORD:-gustavo}
+        UNAME: ${DOCKER_UNAME:-gustavo}
     environment:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - ./api/sales-agenda-api:/home/${DOCKER_UNAME}/sales-agenda-api
+ 

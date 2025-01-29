@@ -21,7 +21,14 @@ RUN npm i -g @nestjs/cli
 RUN apk --no-cache add sudo busybox-suid
 RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
 
-USER ${UNAME}
-WORKDIR "/home/${UNAME}"
+COPY --chown=${UNAME}:wheel sales-agenda-api /home/${UNAME}/sales-agenda-api
 
-ENTRYPOINT ["/bin/bash"]
+USER ${UNAME}
+WORKDIR "/home/${UNAME}/sales-agenda-api"
+
+RUN npm i
+RUN npm run build
+
+ENTRYPOINT ["npm", "run", "start"]
+
+# ENTRYPOINT ["/bin/bash"]
