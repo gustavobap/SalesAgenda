@@ -51,9 +51,24 @@ You can remove docker images and containers running following script
 ```bash
 docker-compose down --rmi all
 ```
-## Usage Instructions
+## Usage Notes
 
-TODO
+### Validations
+
+The request data is validated according to the following rules. If validation fails, the response will return an appropriate error message:
+
+- **date**: Required. Must be a string in ISO-8601 format.  
+- **products**: Optional. If provided, it must be one of `"Heatpumps"` or `"SolarPanels"`. If omitted, the response will include available slots for any product.  
+- **language**: Optional. If provided, it must be either `"German"` or `"English"`. If omitted, the response will include available slots for any language.  
+- **rating**: Optional. If provided, it must be one of `"Gold"`, `"Silver"`, or `"Bronze"`. If omitted, the response will include available slots for any rating.  
+
+An additional validation could be added to ensure the date is today or later. However, to simplify testing with fixed data samples, this constraint has been omitted.  
+
+### Database
+
+A **composite index** was added for `slots.start_date` and `slots.end_date`. This is an optimal choice for scenarios requiring frequent data queries with fewer write operations.  
+
+The provided `init.sql` file remains unchanged. Instead, the index is created in a separate file, `0_create-tables.sql`. The tables are re-created in this file to enforce the correct index creation order before inserting data.
 
 ## Contact Information
 For questions or support, please contact gustavo.peixoto.jobs@gmail.com
