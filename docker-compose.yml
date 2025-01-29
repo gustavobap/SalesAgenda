@@ -5,6 +5,10 @@ services:
     container_name: sales-agenda-db
     build:
       context: ./database
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
   api:
     depends_on:
       - database
